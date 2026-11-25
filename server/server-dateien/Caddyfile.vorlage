@@ -1,0 +1,9 @@
+# Vorlage – baue-cloud-init.py erzeugt daraus /etc/caddy/Caddyfile mit deiner echten Domain.
+# HTTPS (Let's Encrypt) automatisch, kein Zugriffsprotokoll, alles an Node weiterreichen.
+DEINE-DOMAIN.de {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:8787
+    log {
+        output discard
+    }
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termin buchen</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/buchen.css">
+</head>
+<body class="booking">
+<header class="bk-head">
+  <div class="wrap">
+    <div class="bk-name" id="bizName">Termin buchen</div>
+    <div class="bk-meta muted" id="bizMeta"></div>
+  </div>
+</header>
+
+<main class="wrap bk-main">
+  <div id="notice" class="msg info" hidden></div>
+
+  <!-- Schrittanzeige -->
+  <ol class="steps" id="steps">
+    <li data-s="service" class="on">Leistung</li>
+    <li data-s="staff">Mitarbeiter</li>
+    <li data-s="time">Zeit</li>
+    <li data-s="data">Daten</li>
+    <li data-s="done">Fertig</li>
+  </ol>
+
+  <!-- 1. Leistung -->
+  <section class="step" data-step="service">
+    <h2>Leistung wählen</h2>
+    <div id="services" class="pick"></div>
+  </section>
+
+  <!-- 2. Mitarbeiter -->
+  <section class="step" data-step="staff" hidden>
+    <h2>Mitarbeiter wählen</h2>
+    <div id="staff" class="pick"></div>
+    <button class="btn ghost back" data-back="service">Zurück</button>
+  </section>
+
+  <!-- 3. Zeit -->
+  <section class="step" data-step="time" hidden>
+    <h2>Termin wählen</h2>
+    <p class="muted" id="timeSummary"></p>
+    <div id="days" class="days"></div>
+    <div id="slots" class="slots-wrap"></div>
+    <button class="btn ghost back" data-back="staff">Zurück</button>
+  </section>
+
+  <!-- 4. Daten -->
+  <section class="step" data-step="data" hidden>
+    <h2>Ihre Daten</h2>
+    <p class="muted" id="dataSummary"></p>
+    <form id="form" class="panel" style="margin:0;max-width:none">
+      <div style="position:absolute;left:-9999px" aria-hidden="true"><input tabindex="-1" autocomplete="off" name="website" id="website"></div>
+      <div class="field"><label for="name">Name *</label><input id="name" required autocomplete="name"></div>
+      <div class="field"><label for="phone">Telefon *</label><input id="phone" required inputmode="tel" autocomplete="tel"></div>
+      <div class="field"><label for="email">E-Mail <span class="hint" id="emailHint">(für Bestätigung & Erinnerung)</span></label><input id="email" type="email" autocomplete="email"></div>
+      <div class="field"><label for="note">Anmerkung</label><textarea id="note" maxlength="300"></textarea></div>
+      <div class="field checkrow"><input type="checkbox" id="consent"><label for="consent" style="font-weight:500">Ich bin damit einverstanden, dass meine Angaben zur Terminverwaltung gespeichert werden. <a href="/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a>.</label></div>
+      <div id="formMsg"></div>
+      <button type="submit" class="btn lg block" id="submit">Termin verbindlich buchen</button>
+    </form>
+    <button class="btn ghost back" data-back="time" style="margin-top:12px">Zurück</button>
+  </section>
+
+  <!-- 5. Fertig -->
+  <section class="step" data-step="done" hidden>
+    <div class="done-card">
+      <div class="done-ico">✓</div>
+      <h2>Termin gebucht</h2>
+      <div id="doneDetails"></div>
+      <p class="muted">Bitte den Buchungscode aufbewahren – damit können Sie den Termin verwalten.</p>
+      <button class="btn ghost" onclick="location.reload()">Weiteren Termin buchen</button>
+    </div>
+  </section>
+
+  <!-- Termin verwalten -->
+  <section class="manage">
+    <details>
+      <summary>Bestehenden Termin ansehen oder absagen</summary>
+      <form id="manageForm" class="panel" style="margin-top:16px;max-width:none">
+        <div class="field"><label for="mCode">Buchungscode</label><input id="mCode" placeholder="XXXX-XXXX"></div>
+        <div class="field"><label for="mPhone">Telefonnummer (zur Bestätigung)</label><input id="mPhone" inputmode="tel"></div>
+        <div id="manageMsg"></div>
+        <button type="submit" class="btn ghost block">Termin suchen</button>
+      </form>
+      <div id="manageResult"></div>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span id="footName"></span>
+    <nav><a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a> · <span class="muted">Buchung über TerminPilot</span></nav>
+  </div>
+</footer>
+
+<script src="/config.js"></script>
+<script src="/api.js"></script>
+<script src="/buchen.js"></script>
+</body>
+</html>

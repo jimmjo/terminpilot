@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Betreiber – TerminPilot</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/verwaltung/app.css">
+</head>
+<body class="admin">
+<div id="login" class="login-view" hidden>
+  <div class="login-card">
+    <h1 style="font-size:1.3rem;text-align:center">Betreiber-Konsole</h1>
+    <form id="loginForm">
+      <div class="field"><label>Benutzername</label><input id="u" autocomplete="username"></div>
+      <div class="field"><label>Passwort</label><input id="p" type="password" autocomplete="current-password"></div>
+      <div id="setupWrap" hidden><div class="field"><label>Einrichtungscode (nur Ersteinrichtung)</label><input id="code"></div></div>
+      <div id="msg"></div>
+      <button class="btn block" id="btn">Anmelden</button>
+    </form>
+  </div>
+</div>
+
+<div id="app" hidden style="max-width:1100px;margin:0 auto;padding:24px">
+  <div class="topbar" style="position:static;border-radius:12px;margin-bottom:20px">
+    <div class="vtitle">Betreiber · <span id="opName"></span></div>
+    <button class="btn ghost sm" id="logout">Abmelden</button>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="panel-card">
+    <div class="toolbar"><input class="grow" id="search" placeholder="Suche: Adresse, Name oder E-Mail"><button class="btn ghost sm" id="reload">Aktualisieren</button></div>
+    <table class="tbl"><thead><tr><th>Betrieb</th><th>Adresse</th><th>Paket</th><th>Status</th><th>Termine</th><th></th></tr></thead><tbody id="tbody"></tbody></table>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/config.js"></script>
+<script src="/api.js"></script>
+<script>
+(function () {
+  var TP = window.TP, $ = function (s) { return document.querySelector(s); };
+  var token = localStorage.getItem('tp_op') || '';
+
+  function toast(m, err) { var t = $('#toast'); t.textContent = m; t.className = 'toast' + (err ? ' err' : ''); t.hidden = false; setTimeout(function () { t.hidden = true; }, 2500); }
+  function opApi(path, opts) { opts = opts || {}; opts.token = token; return TP.api(path, opts); }
+
+  async function boot() {
+    try { var s = await TP.api('/api/operator/setup'); if (s.needed) { $('#setupWrap').hidden = false; $('#btn').textContent = 'Betreiber-Zugang anlegen'; } } catch (e) {}
+    if (token) { try { await load(); show('app'); return; } catch (e) { token = ''; } }
+    show('login');
+  }
+  function show(v) { $('#login').hidden = v !== 'login'; $('#app').hidden = v !== 'app'; }
+
+  $('#loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = $('#btn'); btn.disabled = true; $('#msg').innerHTML = '';
+    try {
+      if (!$('#setupWrap').hidden) {
+        await TP.api('/api/operator/setup', { body: { setup_code: $('#code').value, username: $('#u').value, password: $('#p').value } });
+      }
+      var r = await TP.api('/api/operator/login', { body: { username: $('#u').value, password: $('#p').value } });
+      token = r.token; localStorage.setItem('tp_op', token);
+      await load(); show('app');
+    } catch (err) { $('#msg').innerHTML = '<div class="msg err">' + TP.esc(err.message) + '</div>'; btn.disabled = false; }
+  });
+  $('#logout').onclick = function () { localStorage.removeItem('tp_op'); location.reload(); };
+  $('#reload').onclick = load;
+  var st; $('#search').oninput = function () { clearTimeout(st); st = setTimeout(load, 300); };
+
+  async function load() {
+    var stats = await opApi('/api/operator/stats');
+    $('#stats').innerHTML =
+      stat(stats.tenants, 'Betriebe') +
+      stat((stats.byStatus.find(function (x) { return x.status === 'active'; }) || {}).n || 0, 'aktive Abos') +
+      stat((stats.byStatus.find(function (x) { return x.status === 'trial'; }) || {}).n || 0, 'in Testphase') ;
+    var q = $('#search').value.trim();
+    var data = await opApi('/api/operator/tenants' + (q ? '?q=' + encodeURIComponent(q) : ''));
+    var body = $('#tbody'); body.innerHTML = '';
+    data.tenants.forEach(function (t) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td><strong>' + TP.esc(t.name) + '</strong><br><span class="muted">' + TP.esc(t.email) + '</span></td>' +
+        '<td><a href="/buchen.html?b=' + encodeURIComponent(t.slug) + '" target="_blank">' + TP.esc(t.slug) + ' ↗</a></td>' +
+        '<td>' + t.plan + '</td>' +
+        '<td>' + statusChip(t.status) + '</td>' +
+        '<td>' + t.upcoming + '</td>';
+      var td = document.createElement('td');
+      var b = document.createElement('button'); b.className = 'btn ghost xs'; b.textContent = 'Verwalten';
+      b.onclick = function () { manage(t); };
+      td.appendChild(b); tr.appendChild(td); body.appendChild(tr);
+    });
+  }
+  function stat(n, l) { return '<div class="stat"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>'; }
+  function statusChip(s) { var m = { active: 'ok', trial: 'warn', past_due: 'off', canceled: 'off' }; return '<span class="chip ' + (m[s] || '') + '">' + s + '</span>'; }
+
+  async function manage(t) {
+    var status = prompt('Status setzen (trial / active / past_due / canceled):', t.status);
+    if (status === null) return;
+    var plan = prompt('Paket (basis / plus / pro):', t.plan);
+    if (plan === null) return;
+    var extend = prompt('Testphase um … Tage ab heute verlängern (leer = nicht ändern):', '');
+    var payload = { status: status.trim(), plan: plan.trim() };
+    if (extend && extend.trim()) payload.extend_days = parseInt(extend.trim(), 10) || 0;
+    try { await opApi('/api/operator/tenants/' + t.id, { method: 'PATCH', body: payload }); toast('Gespeichert'); load(); }
+    catch (e) { toast(e.message, true); }
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+{ "name": "terminpilot-api", "private": true, "type": "module", "main": "server.js" }

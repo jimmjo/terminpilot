@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Betrieb registrieren – TerminPilot</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<header class="nav"><div class="wrap"><a class="brand" href="/"><span class="dot"></span>TerminPilot</a><nav><a class="btn ghost" href="/verwaltung/">Anmelden</a></nav></div></header>
+
+<section style="padding-top:48px">
+  <div class="wrap">
+    <div class="panel">
+      <h1 style="font-size:2rem">Betrieb kostenlos einrichten</h1>
+      <p class="muted">14 Tage testen, keine Kreditkarte. Danach ab 19 €/Monat oder einfach aufhören.</p>
+      <form id="form" style="margin-top:24px">
+        <div style="position:absolute;left:-9999px" aria-hidden="true"><input tabindex="-1" autocomplete="off" name="website" id="website"></div>
+        <div class="field">
+          <label for="name">Name des Betriebs *</label>
+          <input id="name" required maxlength="80" placeholder="z. B. Salon Müller">
+        </div>
+        <div class="field">
+          <label>Art der Plattform *</label>
+          <div class="type-pick" id="typePick">
+            <button type="button" data-type="arzt" data-branche="praxis"><span class="ti">🩺</span><span class="tt">Arzt / Praxis</span><span class="td">Sprechstunde, Vorsorge, Beratung</span></button>
+            <button type="button" data-type="allgemein" data-branche="allgemein"><span class="ti">📅</span><span class="tt">Allgemein</span><span class="td">Termin & Beratung, für alles</span></button>
+            <button type="button" data-type="spezifisch"><span class="ti">🏷️</span><span class="tt">Spezifische Branche</span><span class="td">Friseur, Werkstatt, Kosmetik …</span></button>
+          </div>
+          <div id="brancheWrap" class="field" style="margin-top:12px;display:none">
+            <label for="branche">Branche wählen</label>
+            <select id="branche">
+              <option value="friseur">Friseur / Barbier</option>
+              <option value="kosmetik">Kosmetik / Nagelstudio</option>
+              <option value="werkstatt">KFZ-Werkstatt</option>
+              <option value="beratung">Beratung / Coaching</option>
+              <option value="handwerk">Handwerk</option>
+            </select>
+          </div>
+          <span class="hint">Legt passende Beispiel-Leistungen an – alles später änderbar.</span>
+        </div>
+        <div class="field">
+          <label for="slug">Wunsch-Adresse der Buchungsseite *</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input id="slug" required maxlength="40" placeholder="salon-mueller" style="font-family:ui-monospace,monospace">
+          </div>
+          <span class="hint" id="slugHint">Ihre Buchungsseite erreichen Kunden unter dieser Adresse.</span>
+        </div>
+        <div class="field">
+          <label for="email">Ihre E-Mail *</label>
+          <input id="email" type="email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label for="username">Benutzername zum Anmelden *</label>
+          <input id="username" required value="admin" autocomplete="username" style="font-family:ui-monospace,monospace">
+        </div>
+        <div class="field">
+          <label for="password">Passwort * <span class="hint">(mind. 10 Zeichen)</span></label>
+          <input id="password" type="password" required minlength="10" autocomplete="new-password">
+        </div>
+        <div class="field checkrow">
+          <input type="checkbox" id="agb" required>
+          <label for="agb" style="font-weight:500">Ich akzeptiere die <a href="/agb.html" target="_blank">AGB</a> und habe die <a href="/datenschutz.html" target="_blank">Datenschutzhinweise</a> gelesen.</label>
+        </div>
+        <div id="msg"></div>
+        <button type="submit" class="btn lg block" id="submit">Betrieb anlegen & loslegen</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap"><div>© <span id="y"></span> TerminPilot</div><nav><a href="/impressum.html">Impressum</a><a href="/datenschutz.html">Datenschutz</a><a href="/agb.html">AGB</a></nav></div></footer>
+
+<script src="/config.js"></script>
+<script src="/api.js"></script>
+<script>
+(function () {
+  var TP = window.TP, $ = function (s) { return document.querySelector(s); };
+  document.getElementById('y').textContent = new Date().getFullYear();
+  var plan = new URLSearchParams(location.search).get('plan') || '';
+
+  // Plattform-Art wählen (Arzt / Allgemein / Spezifisch)
+  var chosenBranche = '';
+  $('#typePick').querySelectorAll('button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      $('#typePick').querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      if (b.dataset.type === 'spezifisch') { $('#brancheWrap').style.display = 'block'; chosenBranche = $('#branche').value; }
+      else { $('#brancheWrap').style.display = 'none'; chosenBranche = b.dataset.branche; }
+    });
+  });
+  $('#branche').addEventListener('change', function () { chosenBranche = this.value; });
+
+  function makeSlug(s){return s.toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);}
+  var slugTouched = false;
+  $('#slug').addEventListener('input', function(){ slugTouched = true; this.value = makeSlug(this.value); checkSlug(); });
+  $('#name').addEventListener('input', function(){ if (!slugTouched) { $('#slug').value = makeSlug(this.value); checkSlug(); } });
+
+  var slugTimer;
+  function checkSlug() {
+    clearTimeout(slugTimer);
+    var slug = $('#slug').value;
+    var h = $('#slugHint');
+    if (!slug) { h.textContent = 'Ihre Buchungsseite erreichen Kunden unter dieser Adresse.'; h.style.color = ''; return; }
+    slugTimer = setTimeout(async function () {
+      try {
+        var r = await TP.api('/api/slug-free?slug=' + encodeURIComponent(slug));
+        if (!r.valid) { h.textContent = '✕ Adresse ungültig (nur a–z, 0–9, Bindestrich).'; h.style.color = 'var(--err)'; }
+        else if (r.free) { h.textContent = '✓ „' + r.slug + '“ ist frei.'; h.style.color = 'var(--ok)'; }
+        else { h.textContent = '✕ „' + r.slug + '“ ist schon vergeben.'; h.style.color = 'var(--err)'; }
+      } catch (e) {}
+    }, 350);
+  }
+
+  $('#form').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = $('#submit'), msg = $('#msg');
+    msg.innerHTML = '';
+    if (!chosenBranche) { msg.innerHTML = '<div class="msg err">Bitte oben die Art der Plattform wählen.</div>'; return; }
+    if (!$('#agb').checked) { msg.innerHTML = '<div class="msg err">Bitte AGB und Datenschutz bestätigen.</div>'; return; }
+    btn.disabled = true; btn.textContent = 'Wird angelegt …';
+    try {
+      var r = await TP.api('/api/signup', { body: {
+        name: $('#name').value, branche: chosenBranche, slug: $('#slug').value,
+        email: $('#email').value, username: $('#username').value, password: $('#password').value,
+        plan: plan, website: $('#website').value,
+      }});
+      // direkt eingeloggt → Token in die Verwaltung übergeben
+      try {
+        localStorage.setItem('tp_admin', JSON.stringify({ token: r.token, slug: r.slug, user: r.user, tenant: r.tenant }));
+      } catch (e) {}
+      msg.innerHTML = '<div class="msg ok">Geschafft! Sie werden zur Verwaltung weitergeleitet …</div>';
+      location.href = '/verwaltung/?neu=1';
+    } catch (err) {
+      msg.innerHTML = '<div class="msg err">' + TP.esc(err.message) + '</div>';
+      btn.disabled = false; btn.textContent = 'Betrieb anlegen & loslegen';
+    }
+  });
+})();
+</script>
+</body>
+</html>

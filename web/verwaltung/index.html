@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Verwaltung – TerminPilot</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="/verwaltung/manifest.webmanifest">
+<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/verwaltung/app.css">
+</head>
+<body class="admin">
+
+<!-- Anmeldung -->
+<div id="loginView" class="login-view" hidden>
+  <div class="login-card">
+    <a class="brand" href="/" style="justify-content:center;margin-bottom:20px"><span class="dot"></span>TerminPilot</a>
+    <h1 style="font-size:1.4rem;text-align:center">Verwaltung</h1>
+    <form id="loginForm">
+      <div class="field"><label for="lSlug">Betriebs-Adresse</label><input id="lSlug" placeholder="salon-mueller" style="font-family:ui-monospace,monospace"></div>
+      <div class="field"><label for="lUser">Benutzername</label><input id="lUser" autocomplete="username"></div>
+      <div class="field"><label for="lPass">Passwort</label><input id="lPass" type="password" autocomplete="current-password"></div>
+      <div id="loginMsg"></div>
+      <button class="btn block" id="loginBtn">Anmelden</button>
+    </form>
+    <p class="muted" style="text-align:center;margin-top:16px;font-size:.9rem">Noch kein Konto? <a href="/registrieren.html">Betrieb registrieren</a></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appView" hidden>
+  <aside class="sidebar">
+    <a class="brand" href="/"><span class="dot"></span>TerminPilot</a>
+    <nav class="menu">
+      <button data-view="dash" class="on">Übersicht</button>
+      <button data-view="calendar">Kalender</button>
+      <button data-view="appts">Termine</button>
+      <button data-view="services">Leistungen</button>
+      <button data-view="staff">Mitarbeiter</button>
+      <button data-view="blocks">Sperrzeiten</button>
+      <button data-view="settings">Einstellungen</button>
+      <button data-view="team">Team</button>
+      <button data-view="billing">Abo</button>
+    </nav>
+    <div class="side-foot">
+      <div class="biz" id="sideBiz"></div>
+      <button class="link" id="logoutBtn">Abmelden</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <button class="hamb" id="hamb" aria-label="Menü">☰</button>
+      <div id="viewTitle" class="vtitle">Übersicht</div>
+      <a class="btn ghost sm" id="bookLink" target="_blank" rel="noopener">Buchungsseite ↗</a>
+    </header>
+    <div id="banner"></div>
+    <div id="view" class="view"></div>
+  </main>
+  <div class="scrim" id="scrim"></div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/config.js"></script>
+<script src="/api.js"></script>
+<script src="/verwaltung/app.js"></script>
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/verwaltung/sw.js').catch(function(){});</script>
+</body>
+</html>

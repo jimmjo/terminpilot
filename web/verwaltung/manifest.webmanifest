@@ -1,0 +1,14 @@
+{
+  "name": "TerminPilot Verwaltung",
+  "short_name": "TerminPilot",
+  "start_url": "/verwaltung/",
+  "scope": "/verwaltung/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "/verwaltung/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/verwaltung/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/verwaltung/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

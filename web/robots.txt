@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Allow: /index.html
+Disallow: /verwaltung/
+Disallow: /betreiber/
+Disallow: /buchen.html
+Disallow: /registrieren.html
+
+Sitemap: https://terminpilot.app/sitemap.xml

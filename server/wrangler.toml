@@ -1,0 +1,26 @@
+# TerminPilot API — Cloudflare Worker + D1
+# Nur als Referenz der Bindings/Trigger. Einrichtung kann komplett im Dashboard erfolgen (siehe SETUP.md).
+
+name = "terminpilot-api"
+main = "server.js"
+compatibility_date = "2025-01-01"
+
+# D1-Datenbank (im Dashboard anlegen, ID hier eintragen)
+[[d1_databases]]
+binding = "DB"
+database_name = "terminpilot"
+database_id = "HIER_DIE_D1_DATABASE_ID_EINTRAGEN"
+
+# Cron: alle 5 Minuten Erinnerungen prüfen; um ~03:00 einmal aufräumen
+[triggers]
+crons = ["*/5 * * * *"]
+
+# Nicht-geheime Variablen (geheime per Dashboard → Secrets):
+[vars]
+APP_ORIGINS = "https://app.terminpilot.app,https://terminpilot.app"
+SIGNUP_ENABLED = "1"
+MAIL_FROM = "termine@terminpilot.app"
+# Secrets NICHT hier eintragen, sondern als "Secret" im Dashboard:
+#   MASTER_KEY, OPERATOR_SETUP_CODE, BREVO_API_KEY,
+#   WA_API_URL, WA_API_KEY,
+#   STRIPE_SECRET, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_BASIS, STRIPE_PRICE_PLUS, STRIPE_PRICE_PRO

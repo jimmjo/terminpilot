@@ -1,0 +1,29 @@
+[Unit]
+Description=TerminPilot – Terminbuchung (Node + SQLite)
+After=network.target
+
+[Service]
+Type=simple
+User=terminpilot
+Group=terminpilot
+EnvironmentFile=/etc/terminpilot.env
+Environment=WEB_DIR=/opt/terminpilot/web
+Environment=DATA_DIR=/var/lib/terminpilot
+Environment=BACKUP_DIR=/var/backups/terminpilot
+Environment=PORT=8787
+WorkingDirectory=/opt/terminpilot/server
+ExecStart=/usr/bin/node /opt/terminpilot/server/server.mjs
+Restart=on-failure
+RestartSec=3
+
+# Härtung
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/terminpilot /var/backups/terminpilot
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

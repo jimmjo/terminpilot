@@ -1,0 +1,51 @@
+/* Buchungsseite */
+.booking { background: var(--soft); }
+.bk-head { background: #fff; border-bottom: 1px solid var(--line); padding: 20px 0; }
+.bk-name { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; }
+.bk-meta { font-size: .95rem; margin-top: 2px; }
+.bk-main { max-width: 760px; padding-top: 24px; padding-bottom: 60px; }
+
+.steps { display: flex; list-style: none; padding: 0; margin: 0 0 28px; gap: 6px; counter-reset: s; overflow-x: auto; }
+.steps li { counter-increment: s; font-size: .82rem; font-weight: 650; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; opacity: .55; }
+.steps li::before { content: counter(s); width: 22px; height: 22px; border-radius: 50%; background: var(--soft2); color: var(--muted); display: grid; place-items: center; font-size: .78rem; }
+.steps li.on { color: var(--ink); opacity: 1; }
+.steps li.on::before { background: var(--accent); color: #fff; }
+.steps li.done { opacity: 1; color: var(--ok); }
+.steps li.done::before { content: "✓"; background: var(--ok); color: #fff; }
+
+.step { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+.step h2 { font-size: 1.35rem; }
+
+.pick { display: grid; gap: 10px; }
+.pick button {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left;
+  background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; width: 100%; font: inherit;
+  transition: border-color .12s, background .12s;
+}
+.pick button:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, #fff); }
+.pick .t { font-weight: 700; }
+.pick .d { color: var(--muted); font-size: .9rem; }
+.pick .price { font-weight: 700; color: var(--accent-dark); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 16px; }
+.day { flex: 0 0 auto; border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 14px; cursor: pointer; text-align: center; background: #fff; min-width: 72px; }
+.day:hover { border-color: var(--accent); }
+.day.on { border-color: var(--accent); background: var(--accent); color: #fff; }
+.day .wd { font-size: .78rem; font-weight: 600; opacity: .8; }
+.day .dd { font-size: 1.15rem; font-weight: 800; }
+.day.closed { opacity: .4; cursor: not-allowed; }
+.slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.slots button { border: 1.5px solid var(--line); background: #fff; border-radius: 10px; padding: 10px; font-weight: 650; cursor: pointer; font-variant-numeric: tabular-nums; }
+.slots button:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, #fff); }
+.empty { color: var(--muted); padding: 16px 0; }
+
+.done-card { text-align: center; padding: 20px; }
+.done-ico { width: 64px; height: 64px; border-radius: 50%; background: var(--ok); color: #fff; font-size: 34px; display: grid; place-items: center; margin: 0 auto 16px; }
+.done-box { background: var(--soft); border-radius: 12px; padding: 18px; margin: 16px 0; text-align: left; }
+.done-box .code { font-size: 1.6rem; font-weight: 800; letter-spacing: .08em; color: var(--accent-dark); }
+
+.manage { margin-top: 24px; }
+.manage summary { cursor: pointer; font-weight: 650; color: var(--muted); }
+.manage summary:hover { color: var(--ink); }
+.back { margin-top: 16px; }
+.result-box { background: var(--soft); border-radius: 12px; padding: 16px; margin-top: 16px; }
