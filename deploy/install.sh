@@ -2,12 +2,11 @@
 # TerminPilot – Installation/Update, vom Server selbst ausgeführt (als root in der Hetzner-Web-Konsole).
 # Läuft neben einem evtl. vorhandenen Dienst (eigener Port 8788, eigener systemd-Dienst, eigener Caddy-Block).
 # Der MASTER_KEY wird hier auf dem Server erzeugt und verlässt ihn nie.
-#
-#   curl -fsSL https://raw.githubusercontent.com/jimmjo/terminpilot/main/deploy/install.sh | DOMAIN=buchung.deine-domain.de bash
-#   (ohne DOMAIN=… läuft es über http://<server-ip> zum Testen, ohne HTTPS)
+# Erwartet den nur-lesenden Deploy-Key unter /root/.ssh/tp_deploy (der Ein-Zeilen-Befehl legt ihn an).
+# DOMAIN=… setzt HTTPS; ohne DOMAIN läuft es über http://<server-ip> zum Testen.
 set -euo pipefail
 
-REPO="https://github.com/jimmjo/terminpilot.git"
+REPO="git@github.com:jimmjo/terminpilot.git"
 DIR=/opt/terminpilot
 PORT=8788
 ENVF=/etc/terminpilot.env
@@ -26,13 +25,19 @@ NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0
 [ "$NODE_MAJOR" -ge 22 ] || { echo "Node >= 22 nötig (node:sqlite). Gefunden: $(node -v 2>/dev/null)"; exit 1; }
 command -v caddy >/dev/null || { echo "Caddy ist nicht installiert. Bitte zuerst Caddy einrichten."; exit 1; }
 
-say "Code holen"
+say "Code holen (privates Repo via Deploy-Key)"
+KEY=/root/.ssh/tp_deploy
+GITSSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+[ -f "$KEY" ] || { echo "Deploy-Key $KEY fehlt – bitte den vollständigen Installationsbefehl verwenden."; exit 1; }
 if [ -d "$DIR/.git" ]; then
+  git -C "$DIR" remote set-url origin "$REPO"
+  git -C "$DIR" config core.sshCommand "$GITSSH"
   git -C "$DIR" fetch --depth 1 origin main
   git -C "$DIR" reset --hard origin/main
 else
   rm -rf "$DIR"
-  git clone --depth 1 "$REPO" "$DIR"
+  GIT_SSH_COMMAND="$GITSSH" git clone --depth 1 "$REPO" "$DIR"
+  git -C "$DIR" config core.sshCommand "$GITSSH"
 fi
 chown -R root:root "$DIR"
 
