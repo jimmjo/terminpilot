@@ -6,7 +6,8 @@
 # DOMAIN=… setzt HTTPS; ohne DOMAIN läuft es über http://<server-ip> zum Testen.
 set -euo pipefail
 
-REPO="git@github.com:jimmjo/terminpilot.git"
+REPO_SSH="git@github.com:jimmjo/terminpilot.git"
+REPO_HTTPS="https://github.com/jimmjo/terminpilot.git"
 DIR=/opt/terminpilot
 PORT=8788
 ENVF=/etc/terminpilot.env
@@ -25,19 +26,26 @@ NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0
 [ "$NODE_MAJOR" -ge 22 ] || { echo "Node >= 22 nötig (node:sqlite). Gefunden: $(node -v 2>/dev/null)"; exit 1; }
 command -v caddy >/dev/null || { echo "Caddy ist nicht installiert. Bitte zuerst Caddy einrichten."; exit 1; }
 
-say "Code holen (privates Repo via Deploy-Key)"
+say "Code holen"
 KEY=/root/.ssh/tp_deploy
-GITSSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-[ -f "$KEY" ] || { echo "Deploy-Key $KEY fehlt – bitte den vollständigen Installationsbefehl verwenden."; exit 1; }
+if [ -f "$KEY" ]; then
+  # privates Repo via read-only Deploy-Key
+  REPO="$REPO_SSH"
+  GITSSH="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+else
+  # öffentliches Repo via HTTPS (kein Schlüssel nötig)
+  REPO="$REPO_HTTPS"
+  GITSSH=""
+fi
 if [ -d "$DIR/.git" ]; then
   git -C "$DIR" remote set-url origin "$REPO"
-  git -C "$DIR" config core.sshCommand "$GITSSH"
-  git -C "$DIR" fetch --depth 1 origin main
+  [ -n "$GITSSH" ] && git -C "$DIR" config core.sshCommand "$GITSSH" || git -C "$DIR" config --unset core.sshCommand 2>/dev/null || true
+  GIT_SSH_COMMAND="$GITSSH" git -C "$DIR" fetch --depth 1 origin main
   git -C "$DIR" reset --hard origin/main
 else
   rm -rf "$DIR"
   GIT_SSH_COMMAND="$GITSSH" git clone --depth 1 "$REPO" "$DIR"
-  git -C "$DIR" config core.sshCommand "$GITSSH"
+  [ -n "$GITSSH" ] && git -C "$DIR" config core.sshCommand "$GITSSH"
 fi
 chown -R root:root "$DIR"
 
