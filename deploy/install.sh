@@ -111,22 +111,26 @@ systemctl daemon-reload
 systemctl enable terminpilot >/dev/null 2>&1 || true
 systemctl restart terminpilot
 
-say "Caddy (HTTPS) – eigener Block, vorhandene bleiben"
+say "Caddy (HTTPS)"
 CADDY=/etc/caddy/Caddyfile
-touch "$CADDY"
-# evtl. alten TerminPilot-Block entfernen (idempotent)
-sed -i '/# >>> terminpilot >>>/,/# <<< terminpilot <<</d' "$CADDY"
-{
-  echo "# >>> terminpilot >>>"
-  if [ -n "$DOMAIN" ]; then echo "$DOMAIN {"; else echo "http://$IP {"; fi
-  echo "    encode zstd gzip"
-  echo "    reverse_proxy 127.0.0.1:$PORT"
-  echo "    log { output discard }"
-  echo "}"
-  echo "# <<< terminpilot <<<"
-} >> "$CADDY"
-caddy validate --config "$CADDY" --adapter caddyfile >/dev/null 2>&1 || echo "Hinweis: Caddy-Konfig bitte prüfen."
-systemctl reload caddy 2>/dev/null || systemctl restart caddy
+# alte Konfig einmalig sichern, dann durch eine saubere, konfliktfreie ersetzen
+[ -f "$CADDY" ] && [ ! -f "$CADDY.vor-terminpilot" ] && cp "$CADDY" "$CADDY.vor-terminpilot" || true
+if [ -n "$DOMAIN" ]; then
+  cat > "$CADDY" <<EOF
+$DOMAIN {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:$PORT
+}
+EOF
+else
+  cat > "$CADDY" <<EOF
+:80 {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:$PORT
+}
+EOF
+fi
+systemctl restart caddy 2>/dev/null || systemctl reload caddy 2>/dev/null || echo "Caddy-Neustart fehlgeschlagen – siehe: journalctl -xeu caddy"
 
 say "Update-Befehl installieren"
 cat > /usr/local/bin/terminpilot-update <<'UPD'
@@ -152,11 +156,9 @@ fi
 echo
 echo "────────────────────────────────────────────────────────"
 echo " FERTIG. Aufrufen:  ${DOMAIN:+https://$DOMAIN}${DOMAIN:-http://$IP}"
-if [ "${NEU:-0}" = "1" ]; then
-  echo " Betreiber-Zugang anlegen unter .../betreiber/ mit diesem Code:"
-  echo "   OPERATOR_SETUP_CODE = $(grep '^OPERATOR_SETUP_CODE=' "$ENVF" | cut -d= -f2)"
-  echo " MASTER_KEY liegt in $ENVF – bitte EINMAL sichern (nie verlieren):"
-  echo "   sudo grep MASTER_KEY $ENVF"
-fi
+echo " Betreiber-Zugang anlegen unter  ${DOMAIN:+https://$DOMAIN}${DOMAIN:-http://$IP}/betreiber/  mit:"
+echo "   OPERATOR_SETUP_CODE = $(grep '^OPERATOR_SETUP_CODE=' "$ENVF" | cut -d= -f2)"
+echo " MASTER_KEY (einmal sichern, nie verlieren):"
+echo "   $(grep '^MASTER_KEY=' "$ENVF" | cut -d= -f2-)"
 echo " Update künftig:  terminpilot-update"
 echo "────────────────────────────────────────────────────────"
